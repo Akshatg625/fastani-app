@@ -19,9 +19,8 @@ import com.google.android.gms.cast.framework.CastContext
 import com.lagradost.fastani.*
 import com.lagradost.fastani.MainActivity.Companion.getColorFromAttr
 import com.lagradost.fastani.ui.PlayerData
-import com.lagradost.fastani.ui.result.ResultFragment
-import com.lagradost.fastani.ui.result.ResultFragment.Companion.fixEpTitle
-import com.lagradost.fastani.ui.result.ResultFragment.Companion.isInResults
+import com.lagradost.fastani.ui.result.ShiroResultFragment.Companion.fixEpTitle
+import com.lagradost.fastani.ui.result.ShiroResultFragment.Companion.isInResults
 import kotlinx.android.synthetic.main.episode_result_downloaded.*
 import kotlinx.android.synthetic.main.episode_result_downloaded.view.*
 import kotlinx.android.synthetic.main.fragment_download_child.*

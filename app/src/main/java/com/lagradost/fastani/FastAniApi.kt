@@ -11,6 +11,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.lagradost.fastani.MainActivity.Companion.activity
 import com.lagradost.fastani.MainActivity.Companion.md5
 import khttp.structures.cookie.CookieJar
+import org.jsoup.Jsoup
 import java.lang.Exception
 import java.net.URLEncoder
 import kotlin.concurrent.thread
@@ -28,7 +29,8 @@ class FastAniApi {
 
     data class Token(
         @JsonProperty("headers") val headers: Map<String, String>,
-        @JsonProperty("cookies") val cookies: CookieJar
+        @JsonProperty("cookies") val cookies: CookieJar,
+        @JsonProperty("token") val token: String,
     )
 
     data class Title(
@@ -92,8 +94,11 @@ class FastAniApi {
     )
 
     data class AnimeData(@JsonProperty("cards") val cards: List<Card>)
-    data class SearchResponse(@JsonProperty("animeData") val animeData: AnimeData?,
-                              @JsonProperty("success") val success: Boolean)
+    data class SearchResponse(
+        @JsonProperty("animeData") val animeData: AnimeData?,
+        @JsonProperty("success") val success: Boolean
+    )
+
     data class EpisodeResponse(@JsonProperty("anime") val anime: Card, @JsonProperty("native") val nextEpisode: Int)
 
     data class Update(
@@ -104,6 +109,58 @@ class FastAniApi {
 
     data class Donor(@JsonProperty("id") val id: String)
 
+    data class ShiroSearchResponseShow(
+        val canonicalTitle: String,
+        val english: String,
+        val image: String,
+        val _id: String,
+
+        )
+
+    data class ShiroSearchResponse(
+        val data: List<ShiroSearchResponseShow>,
+        val status: String
+    )
+
+    data class ShiroVideo(
+        val video_id: String,
+        val host: String,
+    )
+
+    data class ShiroEpisodes(
+        val anime_slug: String,
+        val create: String,
+        val dayOfTheWeek: String,
+        val episode_number: Int,
+        val slug: String,
+        val update: String,
+        val id: String,
+        val videos: List<ShiroVideo>
+    )
+
+    data class AnimePageData(
+        val banner: String,
+        val canonicalTitle: String,
+        val episodeCount: String,
+        val genres: List<String>,
+        val image: String,
+        val japanese: String,
+        val language: String,
+        val name: String,
+        val slug: String,
+        val synopsis: String,
+        val type: String,
+        val views: Int,
+        val year: String,
+        val _id: String,
+        val episodes: List<ShiroEpisodes>
+    )
+
+    data class AnimePage(
+        val data: AnimePageData,
+        val status: String
+    )
+
     companion object {
         const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; rv:68.0) Gecko/20100101 Firefox/68.0"
         private val mapper = JsonMapper.builder().addModule(KotlinModule())
@@ -113,21 +170,21 @@ class FastAniApi {
         private fun getToken(): Token? {
             try {
                 val headers = mapOf("User-Agent" to USER_AGENT)
-                val fastani = khttp.get("https://fastani.net", headers = headers)
+                val shiro = khttp.get("https://shiro.is", headers = headers)
 
-                val jsMatch = Regex("""src="(/static/js/main.*?)"""").find(fastani.text)
+                val jsMatch = Regex("""src="(/static/js/main.*?)"""").find(shiro.text)
                 val (destructed) = jsMatch!!.destructured
-                val jsLocation = "https://fastani.net$destructed"
+                val jsLocation = "https://shiro.is$destructed"
                 val js = khttp.get(jsLocation, headers = headers)
-                val tokenMatch = Regex("""method:"GET".*?"(.*?)".*?"(.*?)"""").find(js.text)
-                val (key, token) = tokenMatch!!.destructured
+                val tokenMatch = Regex("""token:"(.*?)"""").find(js.text)
+                val (token) = tokenMatch!!.destructured
                 val tokenHeaders = mapOf(
-                    key to token,
                     "User-Agent" to USER_AGENT
                 )
                 return Token(
                     tokenHeaders,
-                    fastani.cookies,
+                    shiro.cookies,
+                    token
                 )
             } catch (e: Exception) {
                 println(e)
@@ -184,24 +241,31 @@ class FastAniApi {
             }
         }
 
+
+        fun getVideoLink(id: String): String? {
+            val res = khttp.get("https://ani.googledrive.stream/vidstreaming/vid-ad/$id").text
+            val document = Jsoup.parse(res)
+            return document.select("source").firstOrNull()?.attr("src")
+        }
+
+
         //search via http get request, NOT INSTANT
         // ONLY PAGE 1
-        fun search(query: String, page: Int = 1): SearchResponse? {
+        fun search(query: String, page: Int = 1): ShiroSearchResponse? {
             // Tags and years can be added
-            val url = "https://fastani.net/api/data?page=${page}&animes=1&search=${
+            val url = "https://ani.api-web.site/anime/auto-complete/${
                 URLEncoder.encode(
                     query,
                     "UTF-8"
                 )
-            }&tags=&years="
+            }&token=${currentToken?.token}"
             // Security headers
             val headers = currentToken?.headers
             val response = headers?.let { khttp.get(url, headers = it, cookies = currentToken?.cookies) }
-            val mapped = response?.let { mapper.readValue<SearchResponse>(it.text) }
-            return if (mapped?.success == true)
+            val mapped = response?.let { mapper.readValue<ShiroSearchResponse>(it.text) }
+            return if (mapped?.status == "Found")
                 mapped
             else null
-
             //return response?.text?.let { mapper.readValue(it) }
         }
 

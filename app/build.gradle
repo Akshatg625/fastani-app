@@ -8,12 +8,12 @@ android {
     buildToolsVersion "30.0.3"
 
     defaultConfig {
-        applicationId "com.lagradost.fastani"
+        applicationId "com.lagradost.shiro"
         minSdkVersion 21
         targetSdkVersion 30
         // Don't forget to update versionCode too :)
-        versionCode 12
-        versionName "2.2.1"
+        versionCode 13
+        versionName "2.2.2"
 
         testInstrumentationRunner "androidx.mal_logo.runner.AndroidJUnitRunner"
     }
@@ -83,7 +83,9 @@ dependencies {
     implementation "ch.acra:acra-core:5.7.0"
     implementation "ch.acra:acra-toast:5.7.0"
 
-
+    // Nice scrolling
     implementation 'com.github.nirhart:parallaxscroll:1.0'
 
+    // HTML soup
+    implementation 'org.jsoup:jsoup:1.13.1'
 }

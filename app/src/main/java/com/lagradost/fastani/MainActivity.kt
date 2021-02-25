@@ -40,8 +40,7 @@ import com.lagradost.fastani.ui.PlayerData
 import com.lagradost.fastani.ui.PlayerEventType
 import com.lagradost.fastani.ui.PlayerFragment
 import com.lagradost.fastani.ui.PlayerFragment.Companion.isInPlayer
-import com.lagradost.fastani.ui.result.ResultFragment
-import com.lagradost.fastani.ui.result.ResultFragment.Companion.isInResults
+import com.lagradost.fastani.ui.result.ShiroResultFragment.Companion.isInResults
 import java.lang.Exception
 import java.net.URL
 import java.net.URLDecoder
